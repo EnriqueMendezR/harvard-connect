@@ -19,18 +19,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for existing session on mount
-    const checkAuth = async () => {
-      try {
-        const currentUser = await authApi.getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Auth check failed:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkAuth();
+    // Clear any existing session on app start so users always see the landing page first
+    authApi.logout();
+    setIsLoading(false);
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
