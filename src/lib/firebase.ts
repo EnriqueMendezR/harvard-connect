@@ -1,19 +1,22 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
+import { getAnalytics } from "firebase/analytics";
 
 // TODO: Replace with your Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyB-gB-9Y25V3B_RY16IQzH81KF5c-yAjC4",
+  authDomain: "harvard-huddle-97087.firebaseapp.com",
+  projectId: "harvard-huddle-97087",
+  storageBucket: "harvard-huddle-97087.firebasestorage.app",
+  messagingSenderId: "883023948928",
+  appId: "1:883023948928:web:0540f7ccf208ba878b8a65",
+  measurementId: "G-X94EXNNGSC",
 };
 
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
