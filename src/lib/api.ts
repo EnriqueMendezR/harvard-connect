@@ -151,7 +151,7 @@ export const authApi = {
       
       mockCurrentUser = {
         id: 'demo-user',
-        name: 'Demo User',
+        name: 'Test',
         email: credentials.email,
         year: '2027',
         concentration: 'Computer Science',

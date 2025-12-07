@@ -148,8 +148,16 @@ export default function Profile() {
 
               {/* Profile Details */}
               <div className="mt-8 space-y-4">
-                {isEditing ? (
+              {isEditing ? (
                   <>
+                    <div className="space-y-2">
+                      <Label>Name</Label>
+                      <Input 
+                        value={editForm.name} 
+                        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                        placeholder="Your full name"
+                      />
+                    </div>
                     <div className="space-y-2">
                       <Label>Year</Label>
                       <Input 
