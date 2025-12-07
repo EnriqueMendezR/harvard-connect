@@ -4,7 +4,7 @@ export function Footer() {
   return (
     <footer className="border-t border-border bg-secondary/30">
       <div className="container py-8 md:py-12">
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 mb-4">
@@ -30,14 +30,25 @@ export function Footer() {
             </ul>
           </div>
 
+          {/* Categories */}
+          <div>
+            <h4 className="font-semibold mb-4 text-sm">Categories</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/activities?category=study" className="hover:text-primary transition-colors">Study Groups</Link></li>
+              <li><Link to="/activities?category=sports" className="hover:text-primary transition-colors">Sports</Link></li>
+              <li><Link to="/activities?category=social" className="hover:text-primary transition-colors">Social Events</Link></li>
+              <li><Link to="/activities?category=meal" className="hover:text-primary transition-colors">Meal Buddies</Link></li>
+            </ul>
+          </div>
+
           {/* Support */}
           <div>
             <h4 className="font-semibold mb-4 text-sm">Support</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/help" className="hover:text-primary transition-colors">Help Center</Link></li>
-              <li><Link to="/community-guidelines" className="hover:text-primary transition-colors">Community Guidelines</Link></li>
-              <li><Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-primary transition-colors">Terms of Service</Link></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Help Center</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Community Guidelines</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
+              <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
             </ul>
           </div>
         </div>

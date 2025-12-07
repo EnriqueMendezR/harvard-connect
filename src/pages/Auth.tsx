@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,12 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Mail, Lock, ArrowLeft, AlertCircle, User } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
 
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -24,28 +22,19 @@ export default function Auth() {
     confirmPassword: "",
   });
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (!authLoading && user) {
-      navigate("/activities");
-    }
-  }, [user, authLoading, navigate]);
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-warm">
-        <div className="text-muted-foreground">Loading...</div>
-      </div>
-    );
-  }
-
-  if (user) {
-    return null;
-  }
+  const validateHarvardEmail = (email: string) => {
+    return email.endsWith("@college.harvard.edu") || email.endsWith("@harvard.edu");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Validate email
+    if (!validateHarvardEmail(formData.email)) {
+      setError("Please use your Harvard email address (@college.harvard.edu or @harvard.edu)");
+      return;
+    }
 
     // Validate password
     if (formData.password.length < 8) {
@@ -66,30 +55,18 @@ export default function Auth() {
 
     setIsLoading(true);
 
-    try {
-      if (isSignUp) {
-        await signUp(formData.email, formData.password, formData.name);
-        toast.success("Account created! Please check your email to verify your account.");
-        setIsSignUp(false);
-      } else {
-        await signIn(formData.email, formData.password);
-        toast.success("Welcome back!");
-        navigate("/activities");
-      }
-    } catch (err: any) {
-      const errorMessage = err.message || "An error occurred";
-      if (errorMessage.includes("email-already-in-use")) {
-        setError("An account with this email already exists");
-      } else if (errorMessage.includes("wrong-password") || errorMessage.includes("user-not-found")) {
-        setError("Invalid email or password");
-      } else if (errorMessage.includes("Harvard")) {
-        setError(errorMessage);
-      } else {
-        setError(errorMessage);
-      }
-    } finally {
-      setIsLoading(false);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    if (isSignUp) {
+      toast.success("Account created! Please check your email to verify your account.");
+      setIsSignUp(false);
+    } else {
+      toast.success("Welcome back!");
+      navigate("/activities");
     }
+
+    setIsLoading(false);
   };
 
   return (

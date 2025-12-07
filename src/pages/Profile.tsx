@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,103 +12,97 @@ import {
   Save, 
   X, 
   Calendar, 
+  MapPin, 
   BookOpen,
   GraduationCap,
   Home,
   Sparkles,
-  TrendingUp,
-  Instagram
+  TrendingUp
 } from "lucide-react";
 import { ActivityCard, Activity } from "@/components/activities/ActivityCard";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { authApi } from "@/lib/api";
 
-// Mock activities - these would come from the backend in production
-const myActivities: Activity[] = [];
-const joinedActivities: Activity[] = [];
-const recommendedActivities: Activity[] = [];
+// Mock user data
+const mockUser = {
+  id: "u1",
+  name: "Sarah Chen",
+  email: "schen@college.harvard.edu",
+  year: "2027",
+  concentration: "Computer Science",
+  dorm: "Adams House",
+  interests: ["coding", "basketball", "board games", "photography"],
+  profilePictureUrl: "",
+};
+
+// Mock activities
+const myActivities: Activity[] = [
+  {
+    id: "1",
+    title: "CS50 Problem Set Study Session",
+    category: "study",
+    description: "Working through this week's problem set together.",
+    location: "Lamont Library, B Level",
+    datetime: "2024-12-08T14:00:00",
+    maxSize: 6,
+    participantCount: 4,
+    organizer: { id: "u1", name: "Sarah Chen" }
+  },
+];
+
+const joinedActivities: Activity[] = [
+  {
+    id: "3",
+    title: "Pickup Basketball @ MAC",
+    category: "sports",
+    description: "Casual 5v5 games. All skill levels welcome!",
+    location: "Malkin Athletic Center",
+    datetime: "2024-12-09T16:00:00",
+    maxSize: 10,
+    participantCount: 7,
+    organizer: { id: "u3", name: "Jordan Williams" }
+  },
+];
+
+const recommendedActivities: Activity[] = [
+  {
+    id: "5",
+    title: "Board Game Night",
+    category: "social",
+    description: "Bringing Catan, Codenames, and more!",
+    location: "Adams House JCR",
+    datetime: "2024-12-08T19:00:00",
+    maxSize: 12,
+    participantCount: 8,
+    organizer: { id: "u4", name: "Emily Park" }
+  },
+  {
+    id: "6",
+    title: "CS Internship Tips Panel",
+    category: "study",
+    description: "Alumni sharing tips for landing tech internships",
+    location: "Maxwell Dworkin G115",
+    datetime: "2024-12-10T17:00:00",
+    maxSize: 30,
+    participantCount: 18,
+    organizer: { id: "u5", name: "Tech Club" }
+  },
+];
 
 export default function Profile() {
-  const { user, userProfile, refreshProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState({
-    year: "",
-    concentration: "",
-    dorm: "",
-    interests: [] as string[],
-    instagramHandle: "",
-  });
+  const [user, setUser] = useState(mockUser);
+  const [editForm, setEditForm] = useState(mockUser);
   const [newInterest, setNewInterest] = useState("");
-  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => {
-    if (userProfile) {
-      setEditForm({
-        year: userProfile.year || "",
-        concentration: userProfile.concentration || "",
-        dorm: userProfile.dorm || "",
-        interests: userProfile.interests || [],
-        instagramHandle: userProfile.instagramHandle || "",
-      });
-    }
-  }, [userProfile]);
-
-  const handleSave = async () => {
-    if (!user) return;
-    
-    try {
-      await authApi.updateProfile({
-        year: editForm.year,
-        concentration: editForm.concentration,
-        dorm: editForm.dorm,
-        interests: editForm.interests,
-        instagramHandle: editForm.instagramHandle,
-      });
-      await refreshProfile();
-      setIsEditing(false);
-      toast.success("Profile updated successfully!");
-    } catch (error) {
-      toast.error("Failed to update profile");
-    }
+  const handleSave = () => {
+    setUser(editForm);
+    setIsEditing(false);
+    toast.success("Profile updated successfully!");
   };
 
   const handleCancel = () => {
-    if (userProfile) {
-      setEditForm({
-        year: userProfile.year || "",
-        concentration: userProfile.concentration || "",
-        dorm: userProfile.dorm || "",
-        interests: userProfile.interests || [],
-        instagramHandle: userProfile.instagramHandle || "",
-      });
-    }
+    setEditForm(user);
     setIsEditing(false);
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
-
-    setUploading(true);
-    try {
-      // For now, we'll use a data URL for the preview
-      // In production, you'd upload to your backend storage
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        const dataUrl = reader.result as string;
-        await authApi.updateProfile({
-          profilePictureUrl: dataUrl,
-        });
-        await refreshProfile();
-        toast.success("Profile picture updated!");
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch (error) {
-      toast.error("Failed to upload image");
-      setUploading(false);
-    }
   };
 
   const addInterest = () => {
@@ -128,18 +122,6 @@ export default function Profile() {
     }));
   };
 
-  if (!userProfile) {
-    return (
-      <div className="container py-8 max-w-5xl">
-        <Card className="bg-secondary/20">
-          <CardContent className="py-12 text-center">
-            <p className="text-muted-foreground">Loading profile...</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="container py-8 max-w-5xl">
       <div className="grid lg:grid-cols-3 gap-8">
@@ -151,29 +133,22 @@ export default function Profile() {
                 {/* Avatar */}
                 <div className="relative inline-block">
                   <Avatar className="h-28 w-28 mx-auto border-4 border-background shadow-lg">
-                    <AvatarImage src={userProfile.profilePictureUrl} />
+                    <AvatarImage src={user.profilePictureUrl} />
                     <AvatarFallback className="text-3xl bg-primary/10 text-primary font-display">
-                      {userProfile.name?.charAt(0) || "?"}
+                      {user.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   {isEditing && (
-                    <label className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-md hover:bg-primary/90 transition-colors cursor-pointer">
+                    <button className="absolute bottom-0 right-0 p-2 bg-primary text-primary-foreground rounded-full shadow-md hover:bg-primary/90 transition-colors">
                       <Camera className="h-4 w-4" />
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                        disabled={uploading}
-                      />
-                    </label>
+                    </button>
                   )}
                 </div>
 
                 {/* Name & Email */}
                 <div>
-                  <h2 className="text-2xl font-display font-bold">{userProfile.name}</h2>
-                  <p className="text-sm text-muted-foreground">{userProfile.email}</p>
+                  <h2 className="text-2xl font-display font-bold">{user.name}</h2>
+                  <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
 
                 {/* Edit Button */}
@@ -225,18 +200,6 @@ export default function Profile() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Instagram Handle</Label>
-                      <div className="relative">
-                        <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                          value={editForm.instagramHandle} 
-                          onChange={(e) => setEditForm({...editForm, instagramHandle: e.target.value})}
-                          placeholder="@yourusername"
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
                       <Label>Interests</Label>
                       <div className="flex gap-2">
                         <Input 
@@ -263,49 +226,29 @@ export default function Profile() {
                       <GraduationCap className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-xs text-muted-foreground">Class Year</p>
-                        <p className="font-medium">{userProfile.year || "Not set"}</p>
+                        <p className="font-medium">{user.year}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
                       <BookOpen className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-xs text-muted-foreground">Concentration</p>
-                        <p className="font-medium">{userProfile.concentration || "Not set"}</p>
+                        <p className="font-medium">{user.concentration}</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
                       <Home className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-xs text-muted-foreground">Dorm</p>
-                        <p className="font-medium">{userProfile.dorm || "Not set"}</p>
+                        <p className="font-medium">{user.dorm}</p>
                       </div>
                     </div>
-                    {userProfile.instagramHandle && (
-                      <div className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg">
-                        <Instagram className="h-5 w-5 text-primary" />
-                        <div>
-                          <p className="text-xs text-muted-foreground">Instagram</p>
-                          <a 
-                            href={`https://instagram.com/${userProfile.instagramHandle.replace('@', '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-medium text-primary hover:underline"
-                          >
-                            {userProfile.instagramHandle}
-                          </a>
-                        </div>
-                      </div>
-                    )}
                     <div>
                       <p className="text-xs text-muted-foreground mb-2">Interests</p>
                       <div className="flex flex-wrap gap-2">
-                        {userProfile.interests && userProfile.interests.length > 0 ? (
-                          userProfile.interests.map((interest) => (
-                            <Badge key={interest} variant="secondary">{interest}</Badge>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground">No interests added yet</p>
-                        )}
+                        {user.interests.map((interest) => (
+                          <Badge key={interest} variant="secondary">{interest}</Badge>
+                        ))}
                       </div>
                     </div>
                   </>
@@ -338,19 +281,11 @@ export default function Profile() {
                 <h3 className="text-lg font-semibold">Recommended for You</h3>
                 <p className="text-sm text-muted-foreground">Based on your interests and activity history</p>
               </div>
-              {recommendedActivities.length > 0 ? (
-                <div className="grid md:grid-cols-2 gap-4">
-                  {recommendedActivities.map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} />
-                  ))}
-                </div>
-              ) : (
-                <Card className="bg-secondary/20">
-                  <CardContent className="py-12 text-center">
-                    <p className="text-muted-foreground">No recommendations yet. Join some activities to get personalized suggestions!</p>
-                  </CardContent>
-                </Card>
-              )}
+              <div className="grid md:grid-cols-2 gap-4">
+                {recommendedActivities.map((activity) => (
+                  <ActivityCard key={activity.id} activity={activity} />
+                ))}
+              </div>
             </TabsContent>
 
             <TabsContent value="created" className="mt-6">

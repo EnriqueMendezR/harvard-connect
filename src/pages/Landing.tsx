@@ -7,7 +7,11 @@ import {
   Calendar, 
   MessageCircle, 
   Sparkles, 
-  ArrowRight
+  ArrowRight,
+  BookOpen,
+  Utensils,
+  Trophy,
+  Music
 } from "lucide-react";
 
 export default function Landing() {
@@ -32,6 +36,13 @@ export default function Landing() {
       title: "AI Recommendations",
       description: "Get personalized activity suggestions based on your interests and past participation."
     }
+  ];
+
+  const categories = [
+    { icon: BookOpen, label: "Study Groups", color: "bg-blue-100 text-blue-700" },
+    { icon: Utensils, label: "Meal Buddies", color: "bg-orange-100 text-orange-700" },
+    { icon: Trophy, label: "Sports & Fitness", color: "bg-green-100 text-green-700" },
+    { icon: Music, label: "Social Events", color: "bg-purple-100 text-purple-700" },
   ];
 
   const stats = [
@@ -94,6 +105,27 @@ export default function Landing() {
               className="fill-background"
             />
           </svg>
+        </div>
+      </section>
+
+      {/* Categories Preview */}
+      <section className="container py-12 -mt-8 relative z-10">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {categories.map((category, i) => (
+            <Card 
+              key={category.label} 
+              variant="elevated" 
+              className="animate-slide-up"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className={`p-3 rounded-xl ${category.color}`}>
+                  <category.icon className="h-6 w-6" />
+                </div>
+                <span className="font-semibold">{category.label}</span>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </section>
 
