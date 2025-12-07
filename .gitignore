@@ -1,4 +1,5 @@
-# Logs
+# This file tells git which files to push/pull and include in the repository, standard when using github. Essentially ignores files that are not needed by github
+# Logs are used for debugging and are the lines below are standard in git
 logs
 *.log
 npm-debug.log*
