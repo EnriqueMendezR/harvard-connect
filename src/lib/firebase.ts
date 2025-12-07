@@ -2,9 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
-import { getAnalytics } from "firebase/analytics";
 
-// TODO: Replace with your Firebase config
 const firebaseConfig = {
   apiKey: "AIzaSyB-gB-9Y25V3B_RY16IQzH81KF5c-yAjC4",
   authDomain: "harvard-huddle-97087.firebaseapp.com",
@@ -16,7 +14,6 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
