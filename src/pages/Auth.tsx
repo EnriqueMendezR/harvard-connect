@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 export default function Auth() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { signIn, signUp, user } = useAuth();
+  const { signIn, signUp, user, loading: authLoading } = useAuth();
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -25,8 +25,21 @@ export default function Auth() {
   });
 
   // Redirect if already logged in
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/activities");
+    }
+  }, [user, authLoading, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-warm">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
   if (user) {
-    navigate("/activities");
     return null;
   }
 
