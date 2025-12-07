@@ -76,17 +76,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        await fetchUserProfile(user.uid);
-      } else {
-        setUserProfile(null);
-      }
-      setLoading(false);
-    });
+    try {
+      const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        console.log("Auth state changed:", user?.email);
+        setUser(user);
+        if (user) {
+          try {
+            await fetchUserProfile(user.uid);
+          } catch (error) {
+            console.error("Error fetching profile:", error);
+          }
+        } else {
+          setUserProfile(null);
+        }
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
+      return () => unsubscribe();
+    } catch (error) {
+      console.error("Error setting up auth listener:", error);
+      setLoading(false);
+    }
   }, []);
 
   const isHarvardEmail = (email: string) => {
