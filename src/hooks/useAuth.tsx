@@ -1,31 +1,8 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { 
-  User,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  sendEmailVerification
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  year: string;
-  concentration: string;
-  dorm: string;
-  interests: string[];
-  instagramHandle: string;
-  profilePictureUrl: string;
-  createdAt: Date;
-  lastActiveAt: Date;
-}
+import { authApi, UserProfile, getAuthToken } from '@/lib/api';
 
 interface AuthContextType {
-  user: User | null;
+  user: { id: string; email: string } | null;
   userProfile: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
@@ -45,58 +22,47 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserProfile = async (uid: string) => {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    if (userDoc.exists()) {
-      const data = userDoc.data();
-      setUserProfile({
-        id: uid,
-        name: data.name || '',
-        email: data.email || '',
-        year: data.year || '',
-        concentration: data.concentration || '',
-        dorm: data.dorm || '',
-        interests: data.interests || [],
-        instagramHandle: data.instagramHandle || '',
-        profilePictureUrl: data.profilePictureUrl || '',
-        createdAt: data.createdAt?.toDate() || new Date(),
-        lastActiveAt: data.lastActiveAt?.toDate() || new Date(),
-      });
+  const fetchUserProfile = async () => {
+    try {
+      const profile = await authApi.getMe();
+      if (profile) {
+        setUser({ id: profile.id, email: profile.email });
+        setUserProfile(profile);
+      } else {
+        setUser(null);
+        setUserProfile(null);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+      setUser(null);
+      setUserProfile(null);
     }
   };
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchUserProfile(user.uid);
-    }
+    await fetchUserProfile();
   };
 
   useEffect(() => {
-    try {
-      const unsubscribe = onAuthStateChanged(auth, async (user) => {
-        console.log("Auth state changed:", user?.email);
-        setUser(user);
-        if (user) {
-          try {
-            await fetchUserProfile(user.uid);
-          } catch (error) {
-            console.error("Error fetching profile:", error);
-          }
-        } else {
-          setUserProfile(null);
+    const initAuth = async () => {
+      try {
+        // Check if we have a stored token
+        const token = getAuthToken();
+        if (token) {
+          await fetchUserProfile();
         }
+      } catch (error) {
+        console.error("Error initializing auth:", error);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
 
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Error setting up auth listener:", error);
-      setLoading(false);
-    }
+    initAuth();
   }, []);
 
   const isHarvardEmail = (email: string) => {
@@ -107,7 +73,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (!isHarvardEmail(email)) {
       throw new Error('Please use a Harvard email address (@college.harvard.edu or @harvard.edu)');
     }
-    await signInWithEmailAndPassword(auth, email, password);
+    
+    const result = await authApi.login(email, password);
+    setUser(result.user);
+    await fetchUserProfile();
   };
 
   const signUp = async (email: string, password: string, name: string) => {
@@ -115,29 +84,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       throw new Error('Please use a Harvard email address (@college.harvard.edu or @harvard.edu)');
     }
     
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const newUser = userCredential.user;
-    
-    // Create user document in Firestore
-    await setDoc(doc(db, 'users', newUser.uid), {
-      name,
-      email,
-      year: '',
-      concentration: '',
-      dorm: '',
-      interests: [],
-      instagramHandle: '',
-      profilePictureUrl: '',
-      createdAt: serverTimestamp(),
-      lastActiveAt: serverTimestamp(),
-    });
-
-    // Send email verification
-    await sendEmailVerification(newUser);
+    const result = await authApi.signup(email, password, name);
+    setUser(result.user);
+    await fetchUserProfile();
   };
 
   const logout = async () => {
-    await signOut(auth);
+    authApi.logout();
+    setUser(null);
     setUserProfile(null);
   };
 
