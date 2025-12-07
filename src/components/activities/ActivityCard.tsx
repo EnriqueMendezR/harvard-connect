@@ -10,28 +10,13 @@ import {
   ArrowRight
 } from "lucide-react";
 import { Link } from "react-router-dom";
-
-export interface Activity {
-  id: string;
-  title: string;
-  category: "study" | "meal" | "sports" | "social" | "arts" | "other";
-  description: string;
-  location: string;
-  datetime: string;
-  maxSize: number;
-  participantCount: number;
-  organizer: {
-    id: string;
-    name: string;
-    profilePictureUrl?: string;
-  };
-}
+import type { Activity, ActivityCategory } from "@/lib/types";
 
 interface ActivityCardProps {
   activity: Activity;
 }
 
-const categoryLabels: Record<Activity["category"], string> = {
+const categoryLabels: Record<ActivityCategory, string> = {
   study: "Study",
   meal: "Meal",
   sports: "Sports",
@@ -40,7 +25,7 @@ const categoryLabels: Record<Activity["category"], string> = {
   other: "Other",
 };
 
-const categoryIcons: Record<Activity["category"], string> = {
+const categoryIcons: Record<ActivityCategory, string> = {
   study: "📚",
   meal: "🍕",
   sports: "⚽",
@@ -50,8 +35,8 @@ const categoryIcons: Record<Activity["category"], string> = {
 };
 
 export function ActivityCard({ activity }: ActivityCardProps) {
-  const isFull = activity.participantCount >= activity.maxSize;
-  const spotsLeft = activity.maxSize - activity.participantCount;
+  const isFull = activity.participant_count >= activity.max_size;
+  const spotsLeft = activity.max_size - activity.participant_count;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -111,7 +96,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             <Avatar className="h-7 w-7 border-2 border-background">
-              <AvatarImage src={activity.organizer.profilePictureUrl} />
+              <AvatarImage src={activity.organizer.profile_picture_url} />
               <AvatarFallback className="text-xs bg-secondary">
                 {activity.organizer.name.charAt(0)}
               </AvatarFallback>
@@ -124,7 +109,7 @@ export function ActivityCard({ activity }: ActivityCardProps) {
           <div className="flex items-center gap-1.5">
             <Users className="h-4 w-4 text-muted-foreground" />
             <span className={`text-sm font-medium ${isFull ? 'text-warning' : 'text-foreground'}`}>
-              {activity.participantCount}/{activity.maxSize}
+              {activity.participant_count}/{activity.max_size}
             </span>
           </div>
         </div>
@@ -144,3 +129,5 @@ export function ActivityCard({ activity }: ActivityCardProps) {
     </Card>
   );
 }
+
+export type { Activity };
