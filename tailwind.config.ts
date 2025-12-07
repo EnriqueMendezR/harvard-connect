@@ -1,10 +1,15 @@
+// gives the file autocomplete and type checking 
 import type { Config } from "tailwindcss";
+// tailwind css is used to generate css and decide what files to scan
 
 export default {
+  // Goes into dark mode if a dark class is present on html
   darkMode: ["class"],
+  // Scans these folders for classes 
   content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
+    // the built-in container class for Tailwind CSS
     container: {
       center: true,
       padding: "2rem",
