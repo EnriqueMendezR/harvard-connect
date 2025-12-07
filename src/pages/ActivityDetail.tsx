@@ -13,38 +13,16 @@ import {
   Users, 
   Send,
   Share2,
-  Flag
+  Flag,
+  Instagram
 } from "lucide-react";
-import { Activity } from "@/components/activities/ActivityCard";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { activitiesApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import type { ActivityCategory } from "@/lib/types";
 
-// Mock activity data
-const mockActivity: Activity & { 
-  participants: Array<{ id: string; name: string; profilePictureUrl?: string }>;
-  messages: Array<{ id: string; senderId: string; senderName: string; content: string; createdAt: string }>;
-} = {
-  id: "1",
-  title: "CS50 Problem Set Study Session",
-  category: "study",
-  description: "Working through this week's problem set together. All skill levels welcome - we can help each other out! We'll be focusing on the data structures section and helping each other debug. Bring your laptop and any questions you have.",
-  location: "Lamont Library, B Level, Study Room 4",
-  datetime: "2024-12-08T14:00:00",
-  maxSize: 6,
-  participantCount: 4,
-  organizer: { id: "u1", name: "Sarah Chen", profilePictureUrl: "" },
-  participants: [
-    { id: "u1", name: "Sarah Chen" },
-    { id: "u2", name: "Marcus Johnson" },
-    { id: "u3", name: "Emily Park" },
-    { id: "u4", name: "David Kim" },
-  ],
-  messages: [
-    { id: "m1", senderId: "u1", senderName: "Sarah Chen", content: "Hey everyone! Looking forward to the session. I'll bring some snacks 🍪", createdAt: "2024-12-07T10:30:00" },
-    { id: "m2", senderId: "u2", senderName: "Marcus Johnson", content: "Awesome! I'm stuck on problem 3, hoping we can work through it together", createdAt: "2024-12-07T11:15:00" },
-    { id: "m3", senderId: "u3", senderName: "Emily Park", content: "I finished problem 3 - happy to help! 😊", createdAt: "2024-12-07T14:00:00" },
-  ]
-};
-
-const categoryLabels: Record<string, string> = {
+const categoryLabels: Record<ActivityCategory, string> = {
   study: "Study",
   meal: "Meal",
   sports: "Sports",
@@ -54,13 +32,73 @@ const categoryLabels: Record<string, string> = {
 };
 
 export default function ActivityDetail() {
-  const { id } = useParams();
+  const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState("");
-  const [isJoined, setIsJoined] = useState(false);
 
-  const activity = mockActivity; // In real app, fetch by id
-  const isFull = activity.participantCount >= activity.maxSize;
-  const spotsLeft = activity.maxSize - activity.participantCount;
+  const { data: activity, isLoading, error } = useQuery({
+    queryKey: ['activity', id],
+    queryFn: () => activitiesApi.getActivity(id!),
+    enabled: !!id,
+  });
+
+  const joinMutation = useMutation({
+    mutationFn: () => activitiesApi.joinActivity(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activity', id] });
+      toast.success("Joined activity!");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to join activity");
+    }
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: () => activitiesApi.leaveActivity(id!),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activity', id] });
+      toast.success("Left activity");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to leave activity");
+    }
+  });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: (content: string) => activitiesApi.sendMessage(id!, content),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['activity', id] });
+      setNewMessage("");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to send message");
+    }
+  });
+
+  if (isLoading) {
+    return (
+      <div className="container py-8">
+        <p className="text-muted-foreground">Loading activity...</p>
+      </div>
+    );
+  }
+
+  if (error || !activity) {
+    return (
+      <div className="container py-8">
+        <p className="text-destructive">Activity not found</p>
+        <Link to="/activities">
+          <Button variant="soft" className="mt-4">Back to Activities</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const isFull = activity.participant_count >= activity.max_size;
+  const spotsLeft = activity.max_size - activity.participant_count;
+  const isParticipant = activity.participants?.some(p => p.user_id === user?.id);
+  const isOrganizer = activity.organizer_id === user?.id;
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -92,10 +130,11 @@ export default function ActivityDetail() {
 
   const handleSendMessage = () => {
     if (!newMessage.trim()) return;
-    // In real app, send to backend
-    console.log("Sending message:", newMessage);
-    setNewMessage("");
+    sendMessageMutation.mutate(newMessage);
   };
+
+  const handleJoin = () => joinMutation.mutate();
+  const handleLeave = () => leaveMutation.mutate();
 
   return (
     <div className="container py-8">
@@ -114,7 +153,7 @@ export default function ActivityDetail() {
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant={activity.category as any}>{categoryLabels[activity.category]}</Badge>
+                    <Badge variant={activity.category}>{categoryLabels[activity.category]}</Badge>
                     {isFull ? (
                       <Badge variant="full">Full</Badge>
                     ) : (
@@ -167,18 +206,27 @@ export default function ActivityDetail() {
               </div>
 
               {/* Join/Leave button */}
-              {isJoined ? (
-                <Button variant="secondary" className="w-full" onClick={() => setIsJoined(false)}>
-                  Leave Activity
+              {isOrganizer ? (
+                <Button variant="secondary" className="w-full" disabled>
+                  You're the organizer
+                </Button>
+              ) : isParticipant ? (
+                <Button 
+                  variant="secondary" 
+                  className="w-full" 
+                  onClick={handleLeave}
+                  disabled={leaveMutation.isPending}
+                >
+                  {leaveMutation.isPending ? "Leaving..." : "Leave Activity"}
                 </Button>
               ) : (
                 <Button 
                   variant={isFull ? "secondary" : "default"} 
                   className="w-full" 
-                  disabled={isFull}
-                  onClick={() => setIsJoined(true)}
+                  disabled={isFull || joinMutation.isPending}
+                  onClick={handleJoin}
                 >
-                  {isFull ? "Activity is Full" : "Join Activity"}
+                  {joinMutation.isPending ? "Joining..." : isFull ? "Activity is Full" : "Join Activity"}
                 </Button>
               )}
             </CardContent>
@@ -192,38 +240,49 @@ export default function ActivityDetail() {
             <CardContent className="space-y-4">
               {/* Messages */}
               <div className="space-y-4 max-h-80 overflow-y-auto">
-                {activity.messages.map((message) => (
-                  <div key={message.id} className="flex gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs bg-secondary">
-                        {message.senderName.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-medium text-sm">{message.senderName}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {formatMessageTime(message.createdAt)}
-                        </span>
+                {activity.messages && activity.messages.length > 0 ? (
+                  activity.messages.map((message) => (
+                    <div key={message.id} className="flex gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs bg-secondary">
+                          {message.sender_name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="font-medium text-sm">{message.sender_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {formatMessageTime(message.created_at)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mt-1">{message.content}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">{message.content}</p>
                     </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No messages yet. Be the first to say hi!
+                  </p>
+                )}
               </div>
 
               {/* Message input */}
-              <div className="flex gap-2 pt-4 border-t">
-                <Input
-                  placeholder="Send a message to the group..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                />
-                <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
+              {(isParticipant || isOrganizer) && (
+                <div className="flex gap-2 pt-4 border-t">
+                  <Input
+                    placeholder="Send a message to the group..."
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                  />
+                  <Button 
+                    onClick={handleSendMessage} 
+                    disabled={!newMessage.trim() || sendMessageMutation.isPending}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -238,7 +297,7 @@ export default function ActivityDetail() {
             <CardContent>
               <div className="flex items-center gap-3">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={activity.organizer.profilePictureUrl} />
+                  <AvatarImage src={activity.organizer.profile_picture_url} />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {activity.organizer.name.charAt(0)}
                   </AvatarFallback>
@@ -256,21 +315,21 @@ export default function ActivityDetail() {
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Participants ({activity.participantCount}/{activity.maxSize})
+                Participants ({activity.participant_count}/{activity.max_size})
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {activity.participants.map((participant) => (
+                {activity.participants && activity.participants.map((participant) => (
                   <div key={participant.id} className="flex items-center gap-3">
                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={participant.profilePictureUrl} />
+                      <AvatarImage src={participant.profile_picture_url} />
                       <AvatarFallback className="text-xs bg-secondary">
                         {participant.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="text-sm font-medium">{participant.name}</span>
-                    {participant.id === activity.organizer.id && (
+                    {participant.user_id === activity.organizer_id && (
                       <Badge variant="outline" className="ml-auto text-xs">Host</Badge>
                     )}
                   </div>

@@ -8,8 +8,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Calendar, MapPin, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
+import { activitiesApi } from "@/lib/api";
+import { useAuth } from "@/contexts/AuthContext";
+import type { ActivityCategory } from "@/lib/types";
 
-const categories = [
+const categories: { value: ActivityCategory; label: string; description: string }[] = [
   { value: "study", label: "📚 Study", description: "Study groups, tutoring, exam prep" },
   { value: "meal", label: "🍕 Meal", description: "Lunch, dinner, or coffee meetups" },
   { value: "sports", label: "⚽ Sports", description: "Pickup games, gym sessions, outdoor activities" },
@@ -20,15 +24,26 @@ const categories = [
 
 export default function CreateActivity() {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: "",
-    category: "",
+    category: "" as ActivityCategory | "",
     description: "",
     location: "",
     date: "",
     time: "",
     maxSize: "",
+  });
+
+  const createMutation = useMutation({
+    mutationFn: activitiesApi.createActivity,
+    onSuccess: () => {
+      toast.success("Activity created successfully!");
+      navigate("/activities");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to create activity");
+    }
   });
 
   const handleChange = (field: string, value: string) => {
@@ -57,14 +72,26 @@ export default function CreateActivity() {
       return;
     }
 
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Activity created successfully!");
-    navigate("/activities");
+    createMutation.mutate({
+      title: formData.title,
+      category: formData.category as ActivityCategory,
+      description: formData.description,
+      location: formData.location,
+      datetime: activityDate.toISOString(),
+      max_size: maxSize,
+    });
   };
+
+  if (!user) {
+    return (
+      <div className="container py-8 text-center">
+        <p className="text-muted-foreground">Please log in to create an activity.</p>
+        <Link to="/auth">
+          <Button className="mt-4">Log In</Button>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8 max-w-2xl">
@@ -192,8 +219,8 @@ export default function CreateActivity() {
               <Button type="button" variant="outline" className="flex-1" onClick={() => navigate(-1)}>
                 Cancel
               </Button>
-              <Button type="submit" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create Activity"}
+              <Button type="submit" className="flex-1" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create Activity"}
               </Button>
             </div>
           </form>

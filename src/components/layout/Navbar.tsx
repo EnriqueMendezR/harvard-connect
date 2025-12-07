@@ -4,15 +4,11 @@ import { Button } from "@/components/ui/button";
 import { 
   Menu, 
   X, 
-  Home, 
   Calendar, 
   User, 
-  Bell, 
   Plus,
-  LogOut,
-  Search
+  LogOut
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -66,17 +62,6 @@ export function Navbar({ isAuthenticated = false, onLogout }: NavbarProps) {
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <>
-              {/* Search */}
-              <Button variant="ghost" size="icon" className="hidden sm:flex">
-                <Search className="h-5 w-5" />
-              </Button>
-              
-              {/* Notifications */}
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary animate-pulse-ring" />
-              </Button>
-
               {/* Profile dropdown or logout */}
               <Button variant="ghost" size="sm" onClick={onLogout} className="gap-2 hidden sm:flex">
                 <LogOut className="h-4 w-4" />

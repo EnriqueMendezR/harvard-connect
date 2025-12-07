@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Mail, Lock, ArrowLeft, AlertCircle, User } from "lucide-react";
+import { Mail, Lock, ArrowLeft, AlertCircle, User, Instagram, GraduationCap, BookOpen, Home } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Auth() {
   const navigate = useNavigate();
+  const { login, signup } = useAuth();
   const [searchParams] = useSearchParams();
   const [isSignUp, setIsSignUp] = useState(searchParams.get("mode") === "signup");
   const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +22,10 @@ export default function Auth() {
     email: "",
     password: "",
     confirmPassword: "",
+    year: "",
+    concentration: "",
+    dorm: "",
+    instagram_handle: "",
   });
 
   const validateHarvardEmail = (email: string) => {
@@ -55,18 +61,32 @@ export default function Auth() {
 
     setIsLoading(true);
 
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    if (isSignUp) {
-      toast.success("Account created! Please check your email to verify your account.");
-      setIsSignUp(false);
-    } else {
-      toast.success("Welcome back!");
-      navigate("/activities");
+    try {
+      if (isSignUp) {
+        await signup({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          year: formData.year,
+          concentration: formData.concentration,
+          dorm: formData.dorm,
+          instagram_handle: formData.instagram_handle,
+        });
+        toast.success("Account created successfully!");
+        navigate("/activities");
+      } else {
+        await login({
+          email: formData.email,
+          password: formData.password,
+        });
+        toast.success("Welcome back!");
+        navigate("/activities");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred");
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   return (
@@ -155,20 +175,82 @@ export default function Auth() {
 
               {/* Confirm Password (sign up only) */}
               {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      placeholder="••••••••"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      className="pl-10"
-                    />
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        className="pl-10"
+                      />
+                    </div>
                   </div>
-                </div>
+
+                  <Separator />
+                  <p className="text-sm text-muted-foreground">Optional profile info (you can add later)</p>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="year">Year</Label>
+                      <div className="relative">
+                        <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="year"
+                          placeholder="2027"
+                          value={formData.year}
+                          onChange={(e) => setFormData({ ...formData, year: e.target.value })}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="dorm">Dorm</Label>
+                      <div className="relative">
+                        <Home className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="dorm"
+                          placeholder="Adams House"
+                          value={formData.dorm}
+                          onChange={(e) => setFormData({ ...formData, dorm: e.target.value })}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="concentration">Concentration</Label>
+                    <div className="relative">
+                      <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="concentration"
+                        placeholder="Computer Science"
+                        value={formData.concentration}
+                        onChange={(e) => setFormData({ ...formData, concentration: e.target.value })}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram">Instagram Handle</Label>
+                    <div className="relative">
+                      <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="instagram"
+                        placeholder="your_handle"
+                        value={formData.instagram_handle}
+                        onChange={(e) => setFormData({ ...formData, instagram_handle: e.target.value })}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                </>
               )}
 
               {/* Submit button */}
