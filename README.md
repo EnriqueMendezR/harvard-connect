@@ -9,6 +9,9 @@ Harvard Huddle is a website that facilitates hanging out, studying together, and
 0. Open VS code or another IDE on local laptop
 1. Clone the repository using the URL (run: git clone https://github.com/enr1qvee/harvard-connect.git)
 2. Direct yourself to the project directory (cd harvard-connect)
-3. Install the dependencies (npm i)
-4. Start the server and run an instant preview (npm run dev)
-5. You can press log in and enter the application with the credentials Harvard email *test@college.harvard.edu* and password *Testing12*.
+3. Direct yourself to the server (cd server)
+4. Install dependencies, start the server, and run dev (npm install, npm start, npm run dev)
+5. Direct yourself to harvard-connect folder as a whole (harvard-connect)
+7. Install the dependencies (npm i)
+8. Start the server and run an instant preview (npm run dev)
+9. You can press log in and enter the application with the credentials Harvard email *test@college.harvard.edu* and password *Testing12*.
