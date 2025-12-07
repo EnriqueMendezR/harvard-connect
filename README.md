@@ -5,6 +5,7 @@ Hey Mohamed! We're Arman and Enrique and we're really excited to show you what w
 Harvard Huddle is a website that facilitates hanging out, studying together, and other social interactions by connecting activity organizers with potential participants, closing the gap between them and allowing friendships to easily develop. The website addresses the issue of social isolation at Harvard by enabling activity-based connections rather than going through the sometimes uncomfortable path of having to ask groups of people that do not have the same interests as you. 
 
 **How to run locally**
+
 0. Open VS code or another IDE on local laptop
 1. Clone the repository using the URL (run: git clone https://github.com/enr1qvee/harvard-connect.git)
 2. Direct yourself to the project directory (cd harvard-connect)
