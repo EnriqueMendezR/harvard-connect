@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,11 +22,9 @@ import {
 import { ActivityCard, Activity } from "@/components/activities/ActivityCard";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { authApi } from "@/lib/api";
 
-// Mock activities - these would come from Firestore in production
+// Mock activities - these would come from the backend in production
 const myActivities: Activity[] = [];
 const joinedActivities: Activity[] = [];
 const recommendedActivities: Activity[] = [];
@@ -60,13 +58,12 @@ export default function Profile() {
     if (!user) return;
     
     try {
-      await updateDoc(doc(db, "users", user.uid), {
+      await authApi.updateProfile({
         year: editForm.year,
         concentration: editForm.concentration,
         dorm: editForm.dorm,
         interests: editForm.interests,
         instagramHandle: editForm.instagramHandle,
-        lastActiveAt: serverTimestamp(),
       });
       await refreshProfile();
       setIsEditing(false);
@@ -95,20 +92,21 @@ export default function Profile() {
 
     setUploading(true);
     try {
-      const storageRef = ref(storage, `profilePictures/${user.uid}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      
-      await updateDoc(doc(db, "users", user.uid), {
-        profilePictureUrl: downloadURL,
-        lastActiveAt: serverTimestamp(),
-      });
-      
-      await refreshProfile();
-      toast.success("Profile picture updated!");
+      // For now, we'll use a data URL for the preview
+      // In production, you'd upload to your backend storage
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const dataUrl = reader.result as string;
+        await authApi.updateProfile({
+          profilePictureUrl: dataUrl,
+        });
+        await refreshProfile();
+        toast.success("Profile picture updated!");
+        setUploading(false);
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
       toast.error("Failed to upload image");
-    } finally {
       setUploading(false);
     }
   };
