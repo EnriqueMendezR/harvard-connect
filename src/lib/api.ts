@@ -51,8 +51,8 @@ const mockActivities: Activity[] = [
     datetime: "2024-12-08T14:00:00",
     max_size: 6,
     participant_count: 4,
-    organizer_id: "demo-user",
-    organizer: { id: "demo-user", name: "Demo User" },
+    organizer_id: "organizer-1",
+    organizer: { id: "organizer-1", name: "Activity Organizer" },
     created_at: "2024-12-01T10:00:00",
     is_cancelled: false
   },
@@ -129,8 +129,8 @@ const mockActivities: Activity[] = [
 ];
 
 const mockMessages: Message[] = [
-  { id: "m1", activity_id: "1", sender_id: "demo-user", sender_name: "Demo User", content: "Looking forward to the session!", created_at: "2024-12-07T10:30:00" },
-  { id: "m2", activity_id: "1", sender_id: "u2", sender_name: "Alex Rivera", content: "I'm stuck on problem 3, hoping we can work through it together", created_at: "2024-12-07T11:15:00" },
+  { id: "m1", activity_id: "1", sender_id: "organizer-1", sender_name: "Activity Organizer", content: "Looking forward to the session!", created_at: "2024-12-07T10:30:00" },
+  { id: "m2", activity_id: "1", sender_id: "u2", sender_name: "Alex R.", content: "I'm stuck on problem 3, hoping we can work through it together", created_at: "2024-12-07T11:15:00" },
 ];
 
 // Store for mock session
@@ -315,7 +315,10 @@ export const activitiesApi = {
     if (isPreviewMode) {
       await new Promise(r => setTimeout(r, 300));
       const stored = localStorage.getItem('current_user');
-      const user = stored ? JSON.parse(stored) : { id: 'demo', name: 'Demo User' };
+      if (!stored) {
+        throw new Error('Not logged in');
+      }
+      const user = JSON.parse(stored);
       
       const newActivity: Activity = {
         id: 'new-' + Date.now(),
@@ -366,7 +369,10 @@ export const activitiesApi = {
     if (isPreviewMode) {
       await new Promise(r => setTimeout(r, 200));
       const stored = localStorage.getItem('current_user');
-      const user = stored ? JSON.parse(stored) : { id: 'demo', name: 'Demo User' };
+      if (!stored) {
+        throw new Error('Not logged in');
+      }
+      const user = JSON.parse(stored);
       
       const message: Message = {
         id: 'msg-' + Date.now(),
