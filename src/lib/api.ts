@@ -220,8 +220,11 @@ export const authApi = {
   },
 
   logout() {
+    // Clear all auth-related storage
     localStorage.removeItem('auth_token');
     localStorage.removeItem('current_user');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('current_user');
     mockCurrentUser = null;
   }
 };
