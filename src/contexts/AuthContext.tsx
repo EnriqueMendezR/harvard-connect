@@ -19,9 +19,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Clear any existing session on app start so users always see the landing page first
-    authApi.logout();
-    setIsLoading(false);
+    // Check for existing session on app start
+    const initAuth = async () => {
+      try {
+        const existingUser = await authApi.getCurrentUser();
+        if (existingUser) {
+          setUser(existingUser);
+        }
+      } catch (error) {
+        console.error('Failed to restore session:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    initAuth();
   }, []);
 
   const login = async (credentials: LoginCredentials) => {
