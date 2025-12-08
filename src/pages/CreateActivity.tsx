@@ -1,3 +1,9 @@
+/**
+ * Create Activity Page Component
+ * Form for creating new activities
+ * Handles validation, datetime formatting, and submission
+ */
+
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,6 +19,10 @@ import { activitiesApi } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ActivityCategory } from "@/lib/types";
 
+/**
+ * Activity category options with labels and descriptions
+ * Displayed in the category select dropdown
+ */
 const categories: { value: ActivityCategory; label: string; description: string }[] = [
   { value: "study", label: "📚 Study", description: "Study groups, tutoring, exam prep" },
   { value: "meal", label: "🍕 Meal", description: "Lunch, dinner, or coffee meetups" },
@@ -25,16 +35,19 @@ const categories: { value: ActivityCategory; label: string; description: string 
 export default function CreateActivity() {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // Form state - stores separate date and time, combined before submission
   const [formData, setFormData] = useState({
     title: "",
     category: "" as ActivityCategory | "",
     description: "",
     location: "",
-    date: "",
-    time: "",
-    maxSize: "",
+    date: "",       // YYYY-MM-DD format
+    time: "",       // HH:MM format
+    maxSize: "",    // String for input, converted to number on submit
   });
 
+  // Create activity mutation - redirects to activities page on success
   const createMutation = useMutation({
     mutationFn: activitiesApi.createActivity,
     onSuccess: () => {
@@ -46,14 +59,21 @@ export default function CreateActivity() {
     }
   });
 
+  /**
+   * Update form field handler
+   */
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  /**
+   * Form submission handler
+   * Validates all fields and combines date+time into ISO 8601 datetime
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate
+
+    // Validate all required fields are filled
     if (!formData.title || !formData.category || !formData.location || !formData.date || !formData.time || !formData.maxSize) {
       toast.error("Please fill in all required fields");
       return;

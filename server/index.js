@@ -1,3 +1,9 @@
+/**
+ * Harvard Connect Backend Server
+ * Express.js REST API server for the Harvard Connect application
+ * Handles authentication, user management, and activity management
+ */
+
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
@@ -7,16 +13,29 @@ const { db, initializeDatabase } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// JWT secret for token signing/verification
+// IMPORTANT: Set JWT_SECRET environment variable in production
 const JWT_SECRET = process.env.JWT_SECRET || 'harvard-huddle-secret-key-change-in-production';
 
-// Middleware
+// ========== MIDDLEWARE ==========
+
+// Enable CORS for frontend communication
 app.use(cors());
+
+// Parse JSON request bodies
 app.use(express.json());
 
-// Auth middleware
+/**
+ * Authentication middleware
+ * Verifies JWT token from Authorization header
+ * Attaches decoded user info to req.user
+ *
+ * @middleware
+ */
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = authHeader && authHeader.split(' ')[1]; // Extract Bearer token
 
   if (!token) {
     return res.status(401).json({ message: 'Authentication required' });
@@ -26,19 +45,34 @@ function authenticateToken(req, res, next) {
     if (err) {
       return res.status(403).json({ message: 'Invalid or expired token' });
     }
-    req.user = user;
+    req.user = user; // Attach user info to request
     next();
   });
 }
 
-// Helper to validate Harvard email
+// ========== HELPER FUNCTIONS ==========
+
+/**
+ * Validate Harvard email address
+ * Ensures email ends with @harvard.edu or @college.harvard.edu
+ *
+ * @param {string} email - Email address to validate
+ * @returns {boolean} True if valid Harvard email
+ */
 function isHarvardEmail(email) {
   return email.endsWith('@harvard.edu') || email.endsWith('@college.harvard.edu');
 }
 
-// ========== AUTH ROUTES ==========
+// ========== AUTHENTICATION ROUTES ==========
 
-// Signup
+/**
+ * POST /api/auth/signup
+ * Register a new user account
+ *
+ * Body: { name, email, password, year?, concentration?, dorm?, interests?, instagram_handle? }
+ * Returns: User object with JWT token
+ * Validates: Harvard email, password length, unique email
+ */
 app.post('/api/auth/signup', async (req, res) => {
   try {
     const { name, email, password, year, concentration, dorm, interests, instagram_handle } = req.body;
@@ -81,7 +115,13 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
-// Login
+/**
+ * POST /api/auth/login
+ * Authenticate user with email and password
+ *
+ * Body: { email, password }
+ * Returns: User object with JWT token (7-day expiration)
+ */
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -112,7 +152,13 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-// Get current user
+/**
+ * GET /api/me
+ * Get currently authenticated user's profile
+ *
+ * Auth: Required (JWT token)
+ * Returns: User object without password
+ */
 app.get('/api/me', authenticateToken, (req, res) => {
   const user = db.prepare('SELECT id, name, email, year, concentration, dorm, interests, instagram_handle, profile_picture_url, created_at FROM users WHERE id = ?').get(req.user.id);
   if (!user) {
@@ -122,9 +168,16 @@ app.get('/api/me', authenticateToken, (req, res) => {
   res.json(user);
 });
 
-// ========== USER ROUTES ==========
+// ========== USER PROFILE ROUTES ==========
 
-// Get user profile
+/**
+ * GET /api/users/:id
+ * Get any user's public profile by ID
+ *
+ * Auth: Required
+ * Params: id - User ID
+ * Returns: User object
+ */
 app.get('/api/users/:id', authenticateToken, (req, res) => {
   const user = db.prepare('SELECT id, name, email, year, concentration, dorm, interests, instagram_handle, profile_picture_url, created_at FROM users WHERE id = ?').get(req.params.id);
   if (!user) {
@@ -134,13 +187,22 @@ app.get('/api/users/:id', authenticateToken, (req, res) => {
   res.json(user);
 });
 
-// Update user profile
+/**
+ * PUT /api/users/me
+ * Update current user's profile
+ *
+ * Auth: Required
+ * Body: Partial user object (any combination of profile fields)
+ * Returns: Updated user object
+ * Note: Dynamically builds UPDATE query based on provided fields
+ */
 app.put('/api/users/me', authenticateToken, (req, res) => {
   const { name, year, concentration, dorm, interests, instagram_handle, profile_picture_url } = req.body;
-  
+
   const updates = [];
   const values = [];
 
+  // Build dynamic UPDATE query based on provided fields
   if (name !== undefined) { updates.push('name = ?'); values.push(name); }
   if (year !== undefined) { updates.push('year = ?'); values.push(year); }
   if (concentration !== undefined) { updates.push('concentration = ?'); values.push(concentration); }
@@ -148,7 +210,8 @@ app.put('/api/users/me', authenticateToken, (req, res) => {
   if (interests !== undefined) { updates.push('interests = ?'); values.push(JSON.stringify(interests)); }
   if (instagram_handle !== undefined) { updates.push('instagram_handle = ?'); values.push(instagram_handle); }
   if (profile_picture_url !== undefined) { updates.push('profile_picture_url = ?'); values.push(profile_picture_url); }
-  
+
+  // Always update the updated_at timestamp
   updates.push("updated_at = datetime('now')");
 
   if (updates.length === 1) {
@@ -165,10 +228,20 @@ app.put('/api/users/me', authenticateToken, (req, res) => {
 
 // ========== ACTIVITY ROUTES ==========
 
-// Get activities
+/**
+ * GET /api/activities
+ * Get all activities with optional filtering
+ *
+ * Auth: Required
+ * Query params:
+ *   - search: Search in title/description
+ *   - category: Filter by category (study, meal, sports, social, arts, etc.)
+ * Returns: Array of activities with organizer info and participant count
+ */
 app.get('/api/activities', authenticateToken, (req, res) => {
   const { search, category } = req.query;
-  
+
+  // Base query joins activities with users and counts participants
   let query = `
     SELECT a.*, u.name as organizer_name, u.profile_picture_url as organizer_picture,
     (SELECT COUNT(*) FROM activity_participants WHERE activity_id = a.id) as participant_count
@@ -178,16 +251,19 @@ app.get('/api/activities', authenticateToken, (req, res) => {
   `;
   const params = [];
 
+  // Add category filter if provided
   if (category) {
     query += ' AND a.category = ?';
     params.push(category);
   }
 
+  // Add search filter (searches both title and description)
   if (search) {
     query += ' AND (a.title LIKE ? OR a.description LIKE ?)';
     params.push(`%${search}%`, `%${search}%`);
   }
 
+  // Sort by datetime (earliest first)
   query += ' ORDER BY a.datetime ASC';
 
   const activities = db.prepare(query).all(...params);

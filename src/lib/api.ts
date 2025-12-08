@@ -1,34 +1,59 @@
-import type { 
-  User, 
-  AuthUser, 
-  Activity, 
+/**
+ * API Client Module
+ * Handles all communication with the backend server
+ * Supports both real backend mode and preview mode with mock data
+ */
+
+import type {
+  User,
+  AuthUser,
+  Activity,
   ActivityWithDetails,
-  LoginCredentials, 
-  SignupData, 
+  LoginCredentials,
+  SignupData,
   CreateActivityData,
   UpdateProfileData,
   Message
 } from './types';
 
-// API base URL - in production, point this to your local backend
+/**
+ * API base URL configuration
+ * Set VITE_API_URL environment variable to point to backend server
+ * If not set, app runs in preview mode with mock data
+ */
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
-// Check if we're in preview mode (no backend available)
+/**
+ * Preview mode flag
+ * When true, uses mock data instead of real backend calls
+ * Useful for development and demonstrations without a backend
+ */
 const isPreviewMode = !API_BASE_URL || API_BASE_URL === '';
 
-// Helper for API calls
+/**
+ * Generic API call helper function
+ * Handles authentication headers, request/response formatting, and error handling
+ *
+ * @param endpoint - API endpoint path (e.g., '/api/activities')
+ * @param options - Fetch options (method, body, headers, etc.)
+ * @returns Parsed JSON response
+ * @throws Error with message from server or generic error
+ */
 async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  // Retrieve auth token from localStorage for authenticated requests
   const token = localStorage.getItem('auth_token');
-  
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      // Include Bearer token if available
       ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options?.headers,
     },
   });
 
+  // Handle error responses
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }));
     throw new Error(error.message || 'Request failed');
@@ -37,10 +62,13 @@ async function apiCall<T>(endpoint: string, options?: RequestInit): Promise<T> {
   return response.json();
 }
 
-// ============ MOCK DATA FOR PREVIEW ============
+// ============ MOCK DATA FOR PREVIEW MODE ============
+// Used when no backend is configured to provide a working demo experience
 
+/** Mock users storage (currently empty, populated on signup/login) */
 const mockUsers: User[] = [];
 
+/** Sample activities for preview mode demonstration */
 const mockActivities: Activity[] = [
   {
     id: "1",
@@ -128,23 +156,37 @@ const mockActivities: Activity[] = [
   },
 ];
 
+/** Sample messages for preview mode */
 const mockMessages: Message[] = [
   { id: "m1", activity_id: "1", sender_id: "organizer-1", sender_name: "Activity Organizer", content: "Looking forward to the session!", created_at: "2024-12-07T10:30:00" },
   { id: "m2", activity_id: "1", sender_id: "u2", sender_name: "Alex R.", content: "I'm stuck on problem 3, hoping we can work through it together", created_at: "2024-12-07T11:15:00" },
 ];
 
-// Store for mock session
+/** In-memory storage for current user session in preview mode */
 let mockCurrentUser: AuthUser | null = null;
 
-// ============ AUTH API ============
+// ============ AUTHENTICATION API ============
+/**
+ * Authentication API methods
+ * Handles user login, signup, session management, and logout
+ */
 
 export const authApi = {
+  /**
+   * Login user with email and password
+   * In preview mode: validates Harvard email and creates mock session
+   * In backend mode: authenticates against real server
+   *
+   * @param credentials - Email and password
+   * @returns Authenticated user with token
+   * @throws Error if credentials invalid or not Harvard email
+   */
   async login(credentials: LoginCredentials): Promise<AuthUser> {
     if (isPreviewMode) {
-      // Mock login for preview
+      // Simulate API delay for realistic UX
       await new Promise(r => setTimeout(r, 500));
-      
-      // Check if email ends with harvard.edu
+
+      // Validate Harvard email domain
       if (!credentials.email.endsWith('@harvard.edu') && !credentials.email.endsWith('@college.harvard.edu')) {
         throw new Error('Please use your Harvard email address');
       }
@@ -172,10 +214,19 @@ export const authApi = {
     });
   },
 
+  /**
+   * Register new user account
+   * Validates Harvard email and creates user profile
+   *
+   * @param data - User signup information (name, email, password, profile details)
+   * @returns Authenticated user with token
+   * @throws Error if email not Harvard domain
+   */
   async signup(data: SignupData): Promise<AuthUser> {
     if (isPreviewMode) {
       await new Promise(r => setTimeout(r, 500));
-      
+
+      // Enforce Harvard email requirement
       if (!data.email.endsWith('@harvard.edu') && !data.email.endsWith('@college.harvard.edu')) {
         throw new Error('Please use your Harvard email address');
       }
@@ -203,6 +254,12 @@ export const authApi = {
     });
   },
 
+  /**
+   * Get currently authenticated user
+   * Retrieves user from localStorage (preview) or backend session
+   *
+   * @returns Current user or null if not authenticated
+   */
   async getCurrentUser(): Promise<User | null> {
     if (isPreviewMode) {
       const stored = localStorage.getItem('current_user');
@@ -211,7 +268,7 @@ export const authApi = {
       }
       return null;
     }
-    
+
     try {
       return await apiCall<User>('/api/me');
     } catch {
@@ -219,8 +276,12 @@ export const authApi = {
     }
   },
 
+  /**
+   * Logout current user
+   * Clears all authentication data from storage and resets session
+   */
   logout() {
-    // Clear all auth-related storage
+    // Clear all auth-related storage (both localStorage and sessionStorage)
     localStorage.removeItem('auth_token');
     localStorage.removeItem('current_user');
     sessionStorage.removeItem('auth_token');
@@ -230,6 +291,10 @@ export const authApi = {
 };
 
 // ============ USERS API ============
+/**
+ * User profile management API
+ * Handles fetching and updating user profiles
+ */
 
 export const usersApi = {
   async getProfile(userId: string): Promise<User> {
@@ -266,25 +331,40 @@ export const usersApi = {
 };
 
 // ============ ACTIVITIES API ============
+/**
+ * Activities management API
+ * Handles CRUD operations for activities, joining/leaving, and messaging
+ */
 
 export const activitiesApi = {
+  /**
+   * Get all activities with optional filtering
+   * Supports search by title/description and filtering by category
+   *
+   * @param params - Optional search query and category filter
+   * @returns Array of activities sorted by datetime
+   */
   async getActivities(params?: { search?: string; category?: string }): Promise<Activity[]> {
     if (isPreviewMode) {
       await new Promise(r => setTimeout(r, 300));
       let filtered = [...mockActivities];
-      
+
+      // Filter by category if specified
       if (params?.category) {
         filtered = filtered.filter(a => a.category === params.category);
       }
+
+      // Search in title and description if query provided
       if (params?.search) {
         const q = params.search.toLowerCase();
-        filtered = filtered.filter(a => 
-          a.title.toLowerCase().includes(q) || 
+        filtered = filtered.filter(a =>
+          a.title.toLowerCase().includes(q) ||
           a.description.toLowerCase().includes(q)
         );
       }
-      
-      return filtered.sort((a, b) => 
+
+      // Sort by datetime (earliest first)
+      return filtered.sort((a, b) =>
         new Date(a.datetime).getTime() - new Date(b.datetime).getTime()
       );
     }
@@ -342,6 +422,13 @@ export const activitiesApi = {
     });
   },
 
+  /**
+   * Join an activity as a participant
+   * Increments participant count and tracks in localStorage (preview mode)
+   *
+   * @param activityId - ID of activity to join
+   * @throws Error if activity is full or user already joined
+   */
   async joinActivity(activityId: string): Promise<void> {
     if (isPreviewMode) {
       await new Promise(r => setTimeout(r, 300));
@@ -349,7 +436,7 @@ export const activitiesApi = {
       if (activity) {
         activity.participant_count++;
       }
-      // Track joined activities in localStorage
+      // Track joined activities in localStorage for persistence
       const joined = JSON.parse(localStorage.getItem('joined_activities') || '[]');
       if (!joined.includes(activityId)) {
         joined.push(activityId);
@@ -357,10 +444,16 @@ export const activitiesApi = {
       }
       return;
     }
-    
+
     await apiCall(`/api/activities/${activityId}/join`, { method: 'POST' });
   },
 
+  /**
+   * Leave an activity as a participant
+   * Decrements participant count and removes from tracking
+   *
+   * @param activityId - ID of activity to leave
+   */
   async leaveActivity(activityId: string): Promise<void> {
     if (isPreviewMode) {
       await new Promise(r => setTimeout(r, 300));
@@ -368,16 +461,25 @@ export const activitiesApi = {
       if (activity && activity.participant_count > 0) {
         activity.participant_count--;
       }
-      // Remove from joined activities in localStorage
+      // Remove from joined activities tracking
       const joined = JSON.parse(localStorage.getItem('joined_activities') || '[]');
       const updated = joined.filter((id: string) => id !== activityId);
       localStorage.setItem('joined_activities', JSON.stringify(updated));
       return;
     }
-    
+
     await apiCall(`/api/activities/${activityId}/leave`, { method: 'POST' });
   },
 
+  /**
+   * Send a message to an activity's chat
+   * Creates message with current user as sender
+   *
+   * @param activityId - ID of activity to message
+   * @param content - Message text content
+   * @returns Created message object
+   * @throws Error if user not authenticated
+   */
   async sendMessage(activityId: string, content: string): Promise<Message> {
     if (isPreviewMode) {
       await new Promise(r => setTimeout(r, 200));
@@ -386,7 +488,7 @@ export const activitiesApi = {
         throw new Error('Not logged in');
       }
       const user = JSON.parse(stored);
-      
+
       const message: Message = {
         id: 'msg-' + Date.now(),
         activity_id: activityId,
@@ -398,7 +500,7 @@ export const activitiesApi = {
       mockMessages.push(message);
       return message;
     }
-    
+
     return apiCall<Message>(`/api/activities/${activityId}/messages`, {
       method: 'POST',
       body: JSON.stringify({ content }),

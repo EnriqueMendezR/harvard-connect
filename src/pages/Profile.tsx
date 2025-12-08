@@ -1,3 +1,9 @@
+/**
+ * User Profile Page Component
+ * Displays and allows editing of user profile information
+ * Shows joined activities, created activities, and recommendations
+ */
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,12 +12,12 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  Camera, 
-  Edit2, 
-  Save, 
-  X, 
-  Calendar, 
+import {
+  Camera,
+  Edit2,
+  Save,
+  X,
+  Calendar,
   BookOpen,
   GraduationCap,
   Home,
@@ -28,7 +34,11 @@ import type { Activity } from "@/lib/types";
 
 export default function Profile() {
   const { user, updateProfile } = useAuth();
+
+  // Profile edit mode state
   const [isEditing, setIsEditing] = useState(false);
+
+  // Form state for profile editing
   const [editForm, setEditForm] = useState({
     name: user?.name || "",
     year: user?.year || "",
@@ -37,27 +47,41 @@ export default function Profile() {
     interests: user?.interests || [],
     instagram_handle: user?.instagram_handle || "",
   });
+
+  // State for adding new interests
   const [newInterest, setNewInterest] = useState("");
 
-  // Fetch activities for recommendations
+  // Fetch all activities for filtering and recommendations
   const { data: allActivities = [], refetch } = useQuery({
     queryKey: ['activities'],
     queryFn: () => activitiesApi.getActivities(),
-    // Refetch on window focus to catch newly joined activities
+    // Refetch on window focus to ensure joined activities are up-to-date
     refetchOnWindowFocus: true,
   });
 
-  // Get joined activity IDs from localStorage (re-read on each render)
+  /**
+   * Get joined activity IDs from localStorage
+   * Re-reads on each render to stay in sync with joins/leaves
+   */
   const getJoinedIds = () => JSON.parse(localStorage.getItem('joined_activities') || '[]') as string[];
   const joinedActivityIds = getJoinedIds();
-  
-  // Filter activities properly
+
+  /**
+   * Filter activities into three categories:
+   * 1. Joined - activities the user has joined
+   * 2. Created - activities created by the user
+   * 3. Recommended - other activities (limited to 4)
+   */
   const joinedActivities = allActivities.filter(a => joinedActivityIds.includes(a.id));
   const createdActivities = allActivities.filter(a => a.organizer_id === user?.id);
-  const recommendedActivities = allActivities.filter(a => 
+  const recommendedActivities = allActivities.filter(a =>
     !joinedActivityIds.includes(a.id) && a.organizer_id !== user?.id
   ).slice(0, 4);
 
+  /**
+   * Save profile updates
+   * Calls updateProfile from AuthContext and exits edit mode
+   */
   const handleSave = async () => {
     try {
       await updateProfile(editForm);

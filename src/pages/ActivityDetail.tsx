@@ -1,3 +1,12 @@
+/**
+ * Activity Detail Page Component
+ * Displays full details of a single activity including:
+ * - Activity information (title, time, location, etc.)
+ * - Participant list
+ * - Join/leave functionality
+ * - Activity chat/messaging
+ */
+
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -5,12 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
   Send,
   Share2,
   Flag,
@@ -22,6 +31,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import type { ActivityCategory } from "@/lib/types";
 
+// Category display labels mapping
 const categoryLabels: Record<ActivityCategory, string> = {
   study: "Study",
   meal: "Meal",
@@ -32,20 +42,24 @@ const categoryLabels: Record<ActivityCategory, string> = {
 };
 
 export default function ActivityDetail() {
+  // Get activity ID from URL params
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [newMessage, setNewMessage] = useState("");
 
+  // Fetch activity details with participants and messages
   const { data: activity, isLoading, error } = useQuery({
     queryKey: ['activity', id],
     queryFn: () => activitiesApi.getActivity(id!),
     enabled: !!id,
   });
 
+  // Join activity mutation
   const joinMutation = useMutation({
     mutationFn: () => activitiesApi.joinActivity(id!),
     onSuccess: () => {
+      // Refetch activity data to update participant list and count
       queryClient.invalidateQueries({ queryKey: ['activity', id] });
       toast.success("Joined activity!");
     },
@@ -54,9 +68,11 @@ export default function ActivityDetail() {
     }
   });
 
+  // Leave activity mutation
   const leaveMutation = useMutation({
     mutationFn: () => activitiesApi.leaveActivity(id!),
     onSuccess: () => {
+      // Refetch activity data to update participant list and count
       queryClient.invalidateQueries({ queryKey: ['activity', id] });
       toast.success("Left activity");
     },
@@ -65,11 +81,13 @@ export default function ActivityDetail() {
     }
   });
 
+  // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: (content: string) => activitiesApi.sendMessage(id!, content),
     onSuccess: () => {
+      // Refetch to show new message
       queryClient.invalidateQueries({ queryKey: ['activity', id] });
-      setNewMessage("");
+      setNewMessage(""); // Clear input field
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to send message");

@@ -98,31 +98,20 @@ Inter → UI & body text
 Playfair Display → Headings & hero typography
 3. Harvard Color System
 Defines CSS variables for:
-Backgrounds & surfaces
-Primary Crimson brand color
-Secondary cream & gold accent colors
-Success, warning, and destructive states
-Border and ring colors
+Backgrounds & surfaces; Primary Crimson brand color
+Secondary cream & gold accent colors; Success, warning, and destructive states; Border and ring colors
 Light mode and dark mode are fully theme-driven using CSS variables.
 4. Global Shadows & Visual Depth
 Defines:
-Card shadows
-Crimson glow effects
-Elevation layers for UI realism
+Card shadows; Crimson glow effects; Elevation layers for UI realism
 5. Animation System
 Defines reusable animations:
-Floating elements
-Slide-in transitions
-Fade-in transitions
-Scale-in transitions
+Floating elements; Slide-in transitions; Fade-in transitions; Scale-in transitions
 6. Scrollbar Customization
 Adds:
-Custom width
-Rounded thumb
-Subtle hover transitions
+Custom width; Rounded thumb; Subtle hover transitions
 Design significance:
-This file serves as the single source of truth for the entire design system, ensuring:
-Visual consistency; Easy theming; Dark mode support; Brand identity enforcement
+This file ensures: visual consistency; Easy theming; Dark mode support; Brand identity enforcement;
 
 App.css — App-Level Styling Placeholder
 This file currently contains only a comment:
@@ -159,7 +148,7 @@ Command; Purpose; npm run dev; Start local server; npm run build
 Production build; npm run preview; Preview production; npm run lint; Code quality checks
 
 Design significance:
-This defines the project as a full production-grade frontend application, not a simple prototype.
+This puts the project on the level of a production-grade frontend application, not a simple prototype.
 
 tsconfig.json, tsconfig.app.json, tsconfig.node.json — TypeScript Control System
 tsconfig.json
