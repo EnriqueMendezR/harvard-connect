@@ -39,16 +39,24 @@ export default function Profile() {
   });
   const [newInterest, setNewInterest] = useState("");
 
-  // Fetch activities for recommendations (in real app, filter by user)
-  const { data: allActivities = [] } = useQuery({
+  // Fetch activities for recommendations
+  const { data: allActivities = [], refetch } = useQuery({
     queryKey: ['activities'],
     queryFn: () => activitiesApi.getActivities(),
+    // Refetch on window focus to catch newly joined activities
+    refetchOnWindowFocus: true,
   });
 
-  // For demo, show some activities as "recommended" and "joined"
-  const recommendedActivities = allActivities.slice(0, 2);
-  const joinedActivities = allActivities.slice(2, 4);
+  // Get joined activity IDs from localStorage (re-read on each render)
+  const getJoinedIds = () => JSON.parse(localStorage.getItem('joined_activities') || '[]') as string[];
+  const joinedActivityIds = getJoinedIds();
+  
+  // Filter activities properly
+  const joinedActivities = allActivities.filter(a => joinedActivityIds.includes(a.id));
   const createdActivities = allActivities.filter(a => a.organizer_id === user?.id);
+  const recommendedActivities = allActivities.filter(a => 
+    !joinedActivityIds.includes(a.id) && a.organizer_id !== user?.id
+  ).slice(0, 4);
 
   const handleSave = async () => {
     try {

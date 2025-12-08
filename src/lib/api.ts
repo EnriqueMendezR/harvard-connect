@@ -349,6 +349,12 @@ export const activitiesApi = {
       if (activity) {
         activity.participant_count++;
       }
+      // Track joined activities in localStorage
+      const joined = JSON.parse(localStorage.getItem('joined_activities') || '[]');
+      if (!joined.includes(activityId)) {
+        joined.push(activityId);
+        localStorage.setItem('joined_activities', JSON.stringify(joined));
+      }
       return;
     }
     
@@ -362,6 +368,10 @@ export const activitiesApi = {
       if (activity && activity.participant_count > 0) {
         activity.participant_count--;
       }
+      // Remove from joined activities in localStorage
+      const joined = JSON.parse(localStorage.getItem('joined_activities') || '[]');
+      const updated = joined.filter((id: string) => id !== activityId);
+      localStorage.setItem('joined_activities', JSON.stringify(updated));
       return;
     }
     
