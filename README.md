@@ -4,7 +4,7 @@ Hey Mohamed! We're Arman and Enrique and we're really excited to show you what w
 
 YouTube Video Link: https://youtu.be/vRMjMll-U6c
 
-Harvard Huddle is a website that facilitates hanging out, studying together, and other social interactions by connecting activity organizers with potential participants, closing the gap between them and allowing friendships to easily develop. The website addresses the issue of social isolation at Harvard by enabling activity-based connections rather than going through the sometimes uncomfortable path of having to ask groups of people that do not have the same interests as you. 
+Harvard Huddle is a website that facilitates hanging out, studying together, and other social interactions by connecting activity organizers with potential participants, closing the gap between them and allowing friendships to easily develop. The website addresses the issue of social isolation at Harvard by enabling activity-based connections rather than going through the sometimes uncomfortable path of having to ask groups of people that do not have the same interests as you. You will need Node Version 20 LTS.
 
 **How to run locally**
 
