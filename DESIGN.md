@@ -15,33 +15,24 @@ Provides the root <div id="root"></div> where React mounts.
 Loads the application via:
 <script type="module" src="/src/main.tsx"></script>
 
-
 Defines SEO and social metadata, including:
-Page title and description
-Open Graph preview image and text
-Twitter card metadata
-Canonical production URL
+Page title and description; Open Graph preview image and text; Twitter card metadata; Canonical production URL
+
 Design significance:
 This file ensures the project behaves like a real production website with:
-Search engine optimization
-Social media preview support
-Proper browser rendering setup
+Search engine optimization; Social media preview support; Proper browser rendering setup
 All application logic is intentionally excluded from this file and delegated entirely to React.
 
 main.tsx — React Entry Point
 This file is responsible for bootstrapping React into the DOM.
 What it does:
-Imports createRoot from React 18.
-Imports the root <App /> component.
-Imports index.css to activate Tailwind and theme variables.
+Imports createRoot from React 18; Imports the root <App /> component; Imports index.css to activate Tailwind and theme variables.
 Mounts the entire React app into the DOM using:
 createRoot(document.getElementById("root")!).render(<App />);
 
-
 Design significance:
 Clean separation between:
-DOM initialization (here)
-Application logic (App.tsx)
+DOM initialization (here); Application logic (App.tsx)
 Uses React’s modern concurrent renderer, enabling better performance and future upgrades.
 
 App.tsx — Global Application Controller
@@ -57,14 +48,13 @@ const [isAuthenticated, setIsAuthenticated] = useState(true);
 
 Simulates logged-in state for demo purposes.
 Controls:
-Page access
-Navbar behavior
-Whether the user sees the Landing page or Activities page
+Page access; Navbar behavior; Whether the user sees the Landing page or Activities page
+
 3. Route-Based Layout Control
 const isAuthPage = location.pathname === "/auth";
 
-Hides Navbar and Footer on the authentication page.
-Keeps the rest of the app visually consistent.
+Hides Navbar and Footer on the authentication page; Keeps the rest of the app visually consistent.
+
 4. Logout Handler
 const handleLogout = () => {
   setIsAuthenticated(false);
@@ -72,10 +62,10 @@ const handleLogout = () => {
 
 Updates authentication state.
 Immediately triggers a full UI update through React’s reactivity.
+
 5. Routing System
 The app defines the following routes:
-Route
-Component
+Route; Component
 /
 Conditional Landing or Activities
 /activities
@@ -88,15 +78,12 @@ Create activity
 User profile
 /auth
 Login & signup
-*
-404 Not Found
+
 
 Design significance:
 This file acts as the global state + navigation + layout controller.
 It enforces:
-Authentication-based routing
-Page-level access control
-Global UI consistency
+Authentication-based routing; Page-level access control; Global UI consistency
 It is fully backend-ready via React Query even though data is currently mocked.
 
 index.css — Global Design System & Theme Engine
@@ -135,10 +122,7 @@ Rounded thumb
 Subtle hover transitions
 Design significance:
 This file serves as the single source of truth for the entire design system, ensuring:
-Visual consistency
-Easy theming
-Dark mode support
-Brand identity enforcement
+Visual consistency; Easy theming; Dark mode support; Brand identity enforcement
 
 App.css — App-Level Styling Placeholder
 This file currently contains only a comment:
@@ -146,20 +130,15 @@ This file currently contains only a comment:
 
 Design significance:
 Indicates intentional reliance on:
-Tailwind
-shadcn-ui
-Global design tokens
+Tailwind; shadcn-ui; Global design tokens
 Prevents scattered ad-hoc CSS and encourages systemized styling.
 
 components.json — shadcn-ui Generator Configuration
 This file configures how UI components are generated and themed.
 Key settings:
-Uses TypeScript (tsx: true)
-Uses CSS variables (cssVariables: true)
-Uses Slate as base color
+Uses TypeScript (tsx: true); Uses CSS variables (cssVariables: true); Uses Slate as base color
 Links to:
-tailwind.config.ts
-src/index.css
+tailwind.config.ts; src/index.css
 Import Aliases:
 "@/components"
 "@/lib"
@@ -167,38 +146,17 @@ Import Aliases:
 "@/ui"
 
 Design significance:
-Enables clean imports
-Enforces consistent UI generation
-Guarantees type-safe UI components
+Enables clean imports; Enforces consistent UI generation; Guarantees type-safe UI components
 
 package.json — Project Definition & Scripts
 Runtime Stack:
-React 18 + React DOM
-React Router
-React Query
-Tailwind + Animate
-shadcn-ui + Radix
-Sonner toasts
-Zod + React Hook Form (validation)
-Lucide icons
-Recharts (visualization)
+React 18 + React DOM; React Router; React Query; Tailwind + Animate; shadcn-ui + Radix; Sonner toasts
+Validation; Lucide icons; Visualization
 Development Stack:
-Vite (build system)
-TypeScript
-ESLint
-PostCSS
-Autoprefixer
+Vite (build system); TypeScript; ESLint; PostCSS; Autoprefixer
 Scripts:
-Command
-Purpose
-npm run dev
-Start local server
-npm run build
-Production build
-npm run preview
-Preview production
-npm run lint
-Code quality checks
+Command; Purpose; npm run dev; Start local server; npm run build
+Production build; npm run preview; Preview production; npm run lint; Code quality checks
 
 Design significance:
 This defines the project as a full production-grade frontend application, not a simple prototype.
@@ -213,16 +171,11 @@ Defines alias:
 
 tsconfig.app.json
 Shared configuration for application references.
-Allows JS inside TS project.
-Skips heavy type checking for faster builds.
-tsconfig.node.json
-Strict TypeScript mode for Vite build tooling.
-Prevents silent build failures.
+Allows JS inside TS project; Skips heavy type checking for faster builds; tsconfig.node.json;
+Strict TypeScript mode for Vite build tooling; Prevents silent build failures.
 Design significance:
 This split ensures:
-Fast frontend development
-Strict, safe build pipeline
-Clean path aliases across the project
+Fast frontend development; Strict, safe build pipeline; Clean path aliases across the project
 
 
 
