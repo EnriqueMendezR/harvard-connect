@@ -10,8 +10,8 @@ Harvard Huddle is a website that facilitates hanging out, studying together, and
 1. Clone the repository using the URL (run: git clone https://github.com/enr1qvee/harvard-connect.git)
 2. Direct yourself to the project directory (cd harvard-connect)
 3. Direct yourself to the server (cd server)
-4. Install dependencies, start the server, and run dev (npm install, npm start, npm run dev)
+4. Install dependencies, start the server, and run dev (npm install, npm run dev), you should see that it runs on localhost:3001
 5. Direct yourself to harvard-connect folder as a whole (harvard-connect)
 7. Install the dependencies (npm i)
-8. Start the server and run an instant preview (npm run dev)
+8. Start the server and run an instant preview (npm run dev), should run on localhost:8080
 9. You can press log in and enter the application with the credentials Harvard email *test@college.harvard.edu* and password *Testing12*.
